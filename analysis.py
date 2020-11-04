@@ -2,6 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import style as style
 from datetime import datetime
+from matplotlib import ticker
 import json
 
 # import data
@@ -23,24 +24,45 @@ ma = lambda x : np.convolve(x, weights, 'same')
 y_btc_avg = ma(y_btc)
 y_usd_avg = ma(y_usd)
 
-style.use('fivethirtyeight')
-plt.tick_params(axis = 'both', which = 'major', labelsize = 18)
-plt.rcParams['lines.linewidth'] = 2
-
 # print(plt.rcParams.keys() )
 # plot data
+plt.figure(1)
+fig = plt.gcf()
+ax = plt.gca()
+fig.set_size_inches(6.4, 4.8)
+plt.subplots_adjust(left=0.1, bottom=0.13, right=0.95, top=0.9)
+plt.autoscale(enable=True, axis='x', tight=True)
+ax.set_facecolor("#f9f9f9")
+fig.patch.set_facecolor("#f9f9f9")
 plt.plot(x_btc, y_btc, c='b', alpha=0.2, label='Data')
 plt.plot(x_btc, y_btc_avg, c='b', alpha=1.0, label='Moving Average')
-plt.ylabel('BTC Transaction Volume (BTC)')
+plt.title("BTC Transaction Volume")
+plt.ylabel('BTC (millions)')
 plt.xlabel('Time')
-plt.yticks([0, 1E6, 2E6, 3E6, 4E6, 5E6, 6E6], ['0  ', '1  ', '2  ', '3  ', '4  ', '5  ', '6M ']) 
+ax.yaxis.set_major_formatter(
+	lambda x, pos : "{:.0f}".format(x / 1e6)
+)
 plt.legend()
-plt.show()
+fig.savefig('renders/btc_tv.png', dpi=100)
 
+plt.figure(2)
+fig = plt.gcf()
+ax = plt.gca()
+fig.set_size_inches(6.4, 4.8)
+plt.subplots_adjust(left=0.1, bottom=0.13, right=0.95, top=0.9)
+plt.autoscale(enable=True, axis='x', tight=True)
+plt.autoscale(enable=True, axis='x', tight=True)
+ax.set_facecolor("#f9f9f9")
+fig.patch.set_facecolor("#f9f9f9")
 plt.plot(x_usd, y_usd, c='b', alpha=0.2, label='Data')
 plt.plot(x_usd, y_usd_avg, c='b', alpha=1.0, label='Moving Average')
-plt.ylabel('BTC Transaction Volume (USD)')
+plt.title("BTC Transaction Volume (USD)")
+plt.ylabel('USD (billions)')
 plt.xlabel('Time')
-plt.yticks([0, 1E9, 2E9, 3E9, 4E9, 5E9, 6E9], ['0  ', '1  ', '2  ', '3  ', '4  ', '5  ', '6M ']) 
+ax.yaxis.set_major_formatter(
+	lambda x, pos : "{:.0f}".format(x / 1e9)
+)
 plt.legend()
+fig.savefig('renders/btc_tv_usd.png', dpi=100)
+
 plt.show()
