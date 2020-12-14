@@ -21,11 +21,11 @@
 \captionsetup[figure]{labelfont={large},textfont={large}}
 \captionsetup[subfigure]{labelfont={}, textfont={}}
 
-\title{Yield Farming with Autopilot}
+\title{Multi-Agent Automated Market Making}
 
 
 \author{
-  Chris Slaughter
+  Chris Slaughter \\
   LVL\\
   Los Angeles, CA 900036 \\
   \texttt{chris@lvl.co}
@@ -36,22 +36,129 @@
 
 \begin{abstract}
 
-The role of a market maker is to provide liquidity on an exchange by quoting bid and ask prices for a small discount or premium to the market price. Automated market making is an active strategy that continuously makes the market in one or more assets. Automated market making has been extensively studied, and an optimal market making algorithm has been proposed by Avellaneda \& Stoikov (2008). In this paper, we review the state of the art in optimal market making, and then propose a simplified market making model that relies on only two parameters: spread and give. We also demonstrate the performance of the model in simulations.
+In this white paper we discuss the background and design decisions of our new AMM v2 "Yield Farming" algorithm. We provide a quick review of constant function pricing models (CFPMs). We propose a new CFPM scoring rule designed to promote inventory management, while also providing price protections for retail market orders. We touch on ways AMM v2 may impact pricing, liquidity, and arbitrage on the exchange. We also share the resuts of running AMM v2 in simulated markets.
 
 \end{abstract}
 
 \keywords{Exchange \and Liquidity \and Automated Market Making}
 
-\section{Introduction}
-\label{sec:intro}
+\section{Background}
+\label{sec:background}
 
+LVL is a US-based financial institution and mobile app that offers free cryptocurrency trading and other consumer financial. LVL operates its own centralized exchange, or spot market, and does not route order flow to institutional market makers or allow them to trade on LVL. To ensure the availability of liquidity on LVL's spot market, we developed and deployed automated market making on LVL in 2019 \cite{amm2019}. Automated market making is available to all LVL Premium members as part of the Autopilot feature of the mobile app. LVL does not participate in automated market making on its own spot market. The automated market making algorithm, which we refer to in this paper as AMM v1, implements the marketing making strategy of Avellaneda and Stoikov \cite{avellaneda}, the optimal strategy for marketing making on limit order books under the standard brownian motion model of market price. AMM v1 modifies this algorithm in several ways to simplify user configuration and manage asset inventory. Since March 2019, Autopilot accounts running AMM v1 has provided liquidity for millions of dollars of market order flow, while earning a potential income for users. While AMM v1 has demonstrated efficient pricing to market, it has experienced numerous instances where inventory has been either sold or bought out on a pair. When inventory is sold or bought out, buy and sell market orders can no longer be executed, respectively. We refer to this as the inventory management problem, and it is the central motivation for AMM v2.
 
+Since we introduced automated market making on LVL, there has been an explosion of interest in automated market making in decentralized finance, or DeFi. DeFi is a system of censorship-resistant, decentralized financial primitives including lending \cite{compound}, stable assets \cite{dai}, and exchanges \cite{uniswapv2}. DeFi exchanges provide a mechanism of exchange of digital assets between interested parties similar to exchanges and marketplaces found in traditional. These digital assets can include online ad units, prediction market bets, or cryptocurrencies. Because digital assets are an emerging class of assets, DeFi exchanges have historically suffered from low liquidity, which has led to the introduction of automated market makers to "bootsrap" liquidity in nascent digital asset markets \cite{practical}. Automated market makers allow market participants to passively allocate their digital assets to the provision of liquidity on an exchange. In return, these participants earn a potential yield on their assets through either trading commissions or a spread on the marginal exchange price \cite{yfintro}. Automated market making algorithms use a \emph{scoring rule} to map liquidity pool reserves and/or a reference market price provided by an oracle, to a marginal asset price. A popular scoring rule for prediction markets is Hanson's \emph{Logarithmic Market Scoring Rule} (LMSR) \cite{hanson}. Our AMM v1 market making algorithm uses a scoring rule based on stochastic optimal control to price limit orders on a spot market. Bancor introduced a scoring rule based on bond curves \cite{bancor}. The most well known scoring rule for DeFi exchanges is the \emph{constant product pricing model}, first introduced in the Uniswap Protocol. Constant product pricing is part of a broader family of \emph{constant function pricing models} (CFPMs) which require any trade to result in reserves in such a way that some function of the reserves is always equal to some constant $k$. In CPPM exchanges, this function is $xy = k$. CPPMs appear to work exceptionally well at solving the inventory management problem despite their simplicity \cite{stanford}. CPPMs, and the broader CFPM family have been demonstrated to closely track the reference price under common conditions.
+
+In this white paper we discuss the background and design decisions of our new AMM v2 "Yield Farming" algorithm. We provide a quick review of constant function pricing models (CFPMs). We propose a new CFPM scoring rule designed to promote inventory management, while also providing price protections for retail market orders. We touch on ways AMM v2 may impact pricing, liquidity, and arbitrage on the exchange. We also share the resuts of running AMM v2 in simulated markets.
+
+\section{Constant Function Pricing Models}
+\label{sec:cfpm}
+
+The section explains the motivtion and mathematical formulation of several well known CFPMs. In exploring the mathematical formulations, we deviate from the reference work in formulas and variable names so that the reader may benefit from a more notationally cohesive exploral of multiple diffent CFPMs. Recall that CFPMs require that the asset reserves, represented in their notional value of a single currency (typically USD), $R_{1}, R_{2}, \dots, R_{n} \in \mathbb{R}^{+}$ satisfy at all times the relation $\varphi(R_{1}, R_{2}, \dots, R_{n}) = k$. Here, $k$ is the constant and $\varphi$ is the \emph{constant function}. The constant function is not to be confused with the constant map, which mapst the entire domain too a constant. The set of all valid reserve alloctions $(R_{1}, R_{2}, \dots, R_{n})$, the preimage of $k$ under $\varphi$. Not all valid reserve allocations may be reachable based on choice of constant function and market model.
+
+\subsection{Constant Product Pricing Model}
+\label{sec:cspm}
+We begin with Constant Product Pricing Model from Uniswap \cite{uniswapv2}. This model uses the constant function $xy = k$. We denote the constant function as $\varphi_{\times}(R_{1}, R_{2})$, and valid reserve allocations satisfy:
+
+\begin{equation}
+\label{eq:cspm}
+\varphi_{\times}(R_1, R_2) = R_1R_2 = k
+\end{equation}
+
+An easy way to visualize the set of valid asset allocations $(R_{1}, R_{2})$ is to plot them as a curve on a graph where the $x$ and $y$ axes represent the value of reserves $R_1$ and $R_2$ respectively. In this case, the curve is $R_2(R_1) = k / R_1$, the familiar inverse linear function $y = a / x$. Because any trade must result in another point on this curve, it is useful to charactize which trades of a given asset allocation $(R_{1}, R_{2})$ result in a new asset allocation $(R_{1}^{\prime}, R_{2}^{\prime})$ satisfying $\varphi_{\times}(R_{1}^{\prime}, R_{2}^{\prime})$, and as a result may be considered "valid trades." To analyze this question, we characterize a trade as a pair of fills $(\Delta_1, \Delta_2)$. W.l.o.g., we can assume that the market order being executed is trading asset $\Delta_1$ for asset $\Delta_2$. Execution of the trade $(\Delta_1, \Delta_2)$ results in a new asset allocation $(R_1, R_2) \rightarrow (R_1 + \Delta_1, R_2 - \Delta_2)$. For this asset allocation to be a valid, it must satisfy $\varphi_{\times}(R_1 + \Delta_1, R_2 - \Delta_2) = k$. Through manipulation, we can see that $\Delta_2$ can be expressed as a function of $(\Delta_1, R_1, and R_2)$:
+
+\begin{equation}
+\label{eq:cspm_sol}
+\Delta_2 = \frac{R_2 \Delta_1}{R_1 + \Delta_1}
+\end{equation}
+
+We can define the executed price, $p_{\Delta_2}(\Delta_1)$, on this trade as $\Delta_1 / \Delta_2$, which represents the units of $\Delta_1$ required to buy one unit of $\Delta_2$. The price $p_{\Delta_1}(\Delta_2)$ can be solved using the above result, leading to:
+
+\begin{equation}
+\label{eq:cspm_price}
+p_{\Delta_2}(\Delta_1) = \Delta_1 / \Delta_2 = \frac{R_1 \Delta_1 + \Delta_1^{2}}{R_2 \Delta_1}
+\end{equation}
+
+This reveals two important properties of Constant Product Pricing Models. First, the price to buy $\Delta_2$ scales quadratially in the amount of $\Delta_1$ that is traded, a process called slippage. CPPM's quadratic slippage creates a strong disincentive for traders to buy out $R_2$, and in fact $R_2$ will not ever sell out, as we will see shortly. Secondly, by evaluating the limit of $p_{\Delta_2}(\Delta_1)$ as $(\Delta_1, \Delta_2) \rightarrow (0, 0)$ we can see that the marginal price on the liquidity pool is $R_1 / R_2$.
+
+We are particularly interested in the case in which $R_1$ represents US dollars so that $R_1 = R_D$, and $R_2$ is a cryptocurrency so that $R_2 = R_B = p_{0} B$. $B$ is the reserve cryptocurrency holdings, and $p_{0}$ is the prevailing market price for the cryptocurrency, measured in dollars. We immediately see that $k = R_D R_B = R_D (p_0 B)$. As in the previous example, we assume a market order buy arrives represented by $(\Delta_D, \Delta_B)$. This can also be written as $(\Delta_D, \delta_B)$, where $\delta_B$ represents the fill size in the cryptocurrency, and the notional value of the cryptocurrency fill, $p_0 \delta_B$ is implicit. Again, $\delta_B$ can be closed for offer size $\Delta_D$:
+
+\begin{equation}
+\label{eq:cspm_sol}
+\delta_B = \frac{R_B \Delta_D}{p_0 ( R_D + \Delta_D )}
+\end{equation}
+
+Further, we can calculate the price $p_{\delta_B}(\Delta_D)$ of this trade as:
+
+\begin{equation}
+\label{eq:cspm_sol}
+p_{\delta_B}(\Delta_D) = \Delta_D / \delta_b = \frac{p_0 (R_D \Delta_D + \Delta_D^2)}{p_0 B \Delta_D} = \frac{R_D \Delta_D + \Delta_D^2}{B \Delta_D}
+\end{equation}
+
+Again, we see that the price to buy $\delta_B$ scales quadratically in the amount of $\Delta_D$ on offer by the market order. By taking the limit of $p_{\Delta_D}(\delta_B)$ as $(\Delta_D, \delta_B) \rightarrow (0, 0)$, we can the marginal price for the liquidity pool is $R_D / B$. Furthermore, the market discovery price, which is the marginal price when $R_D = R_B = p_0 B$, is seen to be $R_D / B = R_D / (R_D / P_0) = p_0$!
+
+\section{Multi-Agent CFPM}
+\label{sec:multiagent}
 
 \bibliographystyle{unsrt}  
 
 \begin{thebibliography}{1}
 
+\bibitem{amm2019}
+Chris Slaughter and Brandon Eng.
+\newblock Automated Market Making.
+\newblock {\em White Paper}, Samsa Technologies Inc. dba LVL, 2019. 
+\newblock \url{https://github.com/chriscslaughter/amm/blob/master/paper/AMM.pdf}
 
+\bibitem{avellaneda}
+Marco Avellaneda and Sasha Stoikov.
+\newblock High-frequency trading in a limit order book.
+\newblock In {\em Quantitative Finance, Vol. 8, No. 3}, pages 217--224. Routledge, 2008.
+
+\bibitem{compound}
+R. Leshner and G. Hayes.
+\newblock Compound: The money market protocol
+\newblock {\em Technical Report}, Compound Labs, 2019.
+\newblock \url{https://compound.finance/documents/Compound.Whitepaper.pdf}
+
+\bibitem{dai}
+The Maker Protocol: MakerDAO's Multi-Collateral Dai (MCD) System
+\newblock {\em White Paper}, MakerDAO, 2015-2020.
+\newblock \url{https://makerdao.com/en/whitepaper}
+
+\bibitem{uniswapv2}
+Hayden Adams, Noah Zinsmeister, and Dan Robinson.
+\newblock Uniswap v2 Core
+\newblock {\em White Paper}, Uniswap, 2020.
+\newblock \url{https://uniswap.org/whitepaper.pdf}
+
+\bibitem{practical}
+A. Othman, D. M. Pennock, D. M. Reeves, and T. Sandholm.
+\newblock A practical liquidity- sensitive automated market maker.
+\newblock In {\em ACM Transactions on Economics and Computation (TEAC), vol. 1, no. 3}, pp. 1–25, 2013.
+
+\bibitem{yfintro}
+Nikolai Kuznetsov.
+\newblock DeFi yield farming, explained.
+\newblock {\em Website Article}, CoinDesk, September 2020, accessed December 2020.
+\newblock \url{https://cointelegraph.com/explained/defi-yield-farming-explained}
+
+\bibitem{hanson}
+R. Hanson.
+\newblock Combinatorial information market design.
+\newblock In {\em Information Systems Frontiers, vol. 5, no. 1}, pp. 107–119, 2003.
+
+\bibitem{bancor}
+Eyal Hertzog, Guy Benartzi, Galia Benartzi.
+\newblock Continuous Liquidity for Cryptographic Tokens through their Smart Contracts.
+\newblock {\em White Paper}, Bancor Protocol, 2018.
+\newblock \url{https://storage.googleapis.com/website-bancor/2018/04/01ba8253\-bancor_protocol_whitepaper_en.pdf}
+
+\bibitem {stanford}
+Guillermo Angeris, Hsien-Tang Kao, Rei Chiang, Charlie Noyes, and Tarun Chitra.
+\newblock An analysis of Uniswap markets.
+\newblock {\em ePrint}, arXiv:1911.03380.
+\newblock \url{https://arxiv.org/abs/1911.03380}
 
 \end{thebibliography}
 
