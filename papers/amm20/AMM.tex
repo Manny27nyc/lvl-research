@@ -61,21 +61,40 @@ The section explains the motivtion and mathematical formulation of several well 
 We begin with Constant Product Pricing Model from Uniswap \cite{uniswapv2}. This model uses the constant function $xy = k$. We denote the constant function as $\varphi_{\times}(R_{1}, R_{2})$, and valid reserve allocations satisfy:
 
 \begin{equation}
-\label{eq:cspm}
+\label{eq:cppm}
 \varphi_{\times}(R_1, R_2) = R_1R_2 = k
 \end{equation}
 
-An easy way to visualize the set of valid asset allocations $(R_{1}, R_{2})$ is to plot them as a curve on a graph where the $x$ and $y$ axes represent the value of reserves $R_1$ and $R_2$ respectively. In this case, the curve is $R_2(R_1) = k / R_1$, the familiar inverse linear function $y = a / x$. Because any trade must result in another point on this curve, it is useful to charactize which trades of a given asset allocation $(R_{1}, R_{2})$ result in a new asset allocation $(R_{1}^{\prime}, R_{2}^{\prime})$ satisfying $\varphi_{\times}(R_{1}^{\prime}, R_{2}^{\prime})$, and as a result may be considered "valid trades." To analyze this question, we characterize a trade as a pair of fills $(\Delta_1, \Delta_2)$. W.l.o.g., we can assume that the market order being executed is trading asset $\Delta_1$ for asset $\Delta_2$. Execution of the trade $(\Delta_1, \Delta_2)$ results in a new asset allocation $(R_1, R_2) \rightarrow (R_1 + \Delta_1, R_2 - \Delta_2)$. For this asset allocation to be a valid, it must satisfy $\varphi_{\times}(R_1 + \Delta_1, R_2 - \Delta_2) = k$. Through manipulation, we can see that $\Delta_2$ can be expressed as a function of $(\Delta_1, R_1, and R_2)$:
+An easy way to visualize the set of valid asset allocations $(R_{1}, R_{2})$ is to plot them as a curve on a graph where the $x$ and $y$ axes represent the value of reserves $R_1$ and $R_2$ respectively. In this case, the curve is $R_2(R_1) = k / R_1$, the familiar inverse linear function $y = a / x$. Because any trade must result in another point on this curve, it is useful to charactize which trades of a given asset allocation $(R_{1}, R_{2})$ result in a new asset allocation $(R_{1}^{\prime}, R_{2}^{\prime})$ that satisfies the invariant:
 
 \begin{equation}
-\label{eq:cspm_sol}
-\Delta_2 = \frac{R_2 \Delta_1}{R_1 + \Delta_1}
+\label{eq:cppm_invariant}
+\varphi_{\times}(R_{1}^{\prime}, R_{2}^{\prime}) = \varphi_{\times}(R_{1}, R_{2}) = k
 \end{equation}
+
+ Trades which satisfy this equation are considered valid because they preserve the constant product $k$. We can characterize a trade as a pair of fills $(\Delta_1, \Delta_2)$. W.l.o.g., we can assume that the market order being executed is trading asset $\Delta_1$ for asset $\Delta_2$. Execution of the trade $(\Delta_1, \Delta_2)$ results in a new asset allocation $(R_1, R_2) \rightarrow (R_1 + \Delta_1, R_2 - \Delta_2)$. For this asset allocation to be a valid, it must satisfy $\varphi_{\times}(R_1 + \Delta_1, R_2 - \Delta_2) = k$. Through manipulation, we can see that $\Delta_1$ can be expressed as a function of $(\Delta_2, R_1, R_2)$:
+
+\begin{equation}
+\label{eq:cppm_sol}
+\Delta_2 = \frac{R_1 \Delta_2}{R_2 - \Delta_2}
+\end{equation}
+
+$\Delta_1$ is the amount of asset that must be \emph{tendered} to purchase $\Delta_2$ units of another asset. We can see that as $\Delta_2$ approaches $R_2$, the total amount of $\Delta_1$ that must be tendered tends towards infinity. As a result, it is impossible for either $R_1$ or $R_2$ to sell out, provided that $R_1, R_2 > 0$ at the outset. We can also consider the marginal price to purchase $\Delta_2$, $P_{\mathrm{buy}}(\Delta_2) = \Delta_1 / \Delta_2$, which we can see from the above equation is:
+
+\begin{equation}
+\label{eq:cppm_price_sol}
+P_{\mathrm{buy}}(\Delta_2) = \frac{R_1}{R_2 - \Delta_2}
+\end{equation}
+
+In this way, as a buyer attempts to purchase more $\Delta_2$ from the liquidity pool, both the price and in turn the amount of $\Delta_1$ that must be tendered become unbounded. We can also see that the marginal cost of 
+
+\subsection{Old Work}
+\label{sec:old}
 
 We can define the executed price, $p_{\Delta_2}(\Delta_1)$, on this trade as $\Delta_1 / \Delta_2$, which represents the units of $\Delta_1$ required to buy one unit of $\Delta_2$. The price $p_{\Delta_1}(\Delta_2)$ can be solved using the above result, leading to:
 
 \begin{equation}
-\label{eq:cspm_price}
+\label{eq:cppm_price}
 p_{\Delta_2}(\Delta_1) = \Delta_1 / \Delta_2 = \frac{R_1 \Delta_1 + \Delta_1^{2}}{R_2 \Delta_1}
 \end{equation}
 
@@ -84,14 +103,14 @@ This reveals two important properties of Constant Product Pricing Models. First,
 We are particularly interested in the case in which $R_1$ represents US dollars so that $R_1 = R_D$, and $R_2$ is a cryptocurrency so that $R_2 = R_B = p_{0} B$. $B$ is the reserve cryptocurrency holdings, and $p_{0}$ is the prevailing market price for the cryptocurrency, measured in dollars. We immediately see that $k = R_D R_B = R_D (p_0 B)$. As in the previous example, we assume a market order buy arrives represented by $(\Delta_D, \Delta_B)$. This can also be written as $(\Delta_D, \delta_B)$, where $\delta_B$ represents the fill size in the cryptocurrency, and the notional value of the cryptocurrency fill, $p_0 \delta_B$ is implicit. Again, $\delta_B$ can be closed for offer size $\Delta_D$:
 
 \begin{equation}
-\label{eq:cspm_sol}
+\label{eq:cppm_sol}
 \delta_B = \frac{R_B \Delta_D}{p_0 ( R_D + \Delta_D )}
 \end{equation}
 
 Further, we can calculate the price $p_{\delta_B}(\Delta_D)$ of this trade as:
 
 \begin{equation}
-\label{eq:cspm_sol}
+\label{eq:cppm_sol}
 p_{\delta_B}(\Delta_D) = \Delta_D / \delta_b = \frac{p_0 (R_D \Delta_D + \Delta_D^2)}{p_0 B \Delta_D} = \frac{R_D \Delta_D + \Delta_D^2}{B \Delta_D}
 \end{equation}
 
