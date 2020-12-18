@@ -21,13 +21,13 @@
 \captionsetup[figure]{labelfont={large},textfont={large}}
 \captionsetup[subfigure]{labelfont={}, textfont={}}
 
-\title{Multi-Agent Automated Market Making}
+\title{Automated Market Making on a Limit Order Book}
 
 
 \author{
   Chris Slaughter \\
   LVL\\
-  Los Angeles, CA 900036 \\
+  Los Angeles, CA\\
   \texttt{chris@lvl.co}
 }
 
@@ -57,67 +57,98 @@ In this white paper we discuss the background and design decisions of our new AM
 The section explains the motivtion and mathematical formulation of several well known CFPMs. In exploring the mathematical formulations, we deviate from the reference work in formulas and variable names so that the reader may benefit from a more notationally cohesive exploral of multiple diffent CFPMs. Recall that CFPMs require that the asset reserves, represented in their notional value of a single currency (typically USD), $R_{1}, R_{2}, \dots, R_{n} \in \mathbb{R}^{+}$ satisfy at all times the relation $\varphi(R_{1}, R_{2}, \dots, R_{n}) = k$. Here, $k$ is the constant and $\varphi$ is the \emph{constant function}. The constant function is not to be confused with the constant map, which mapst the entire domain too a constant. The set of all valid reserve alloctions $(R_{1}, R_{2}, \dots, R_{n})$, the preimage of $k$ under $\varphi$. Not all valid reserve allocations may be reachable based on choice of constant function and market model.
 
 \subsection{Constant Product Pricing Model}
-\label{sec:cspm}
+\label{sec:cppm}
 We begin with Constant Product Pricing Model from Uniswap \cite{uniswapv2}. This model uses the constant function $xy = k$. We denote the constant function as $\varphi_{\times}(R_{1}, R_{2})$, and valid reserve allocations satisfy:
 
 \begin{equation}
-\label{eq:cppm}
 \varphi_{\times}(R_1, R_2) = R_1R_2 = k
 \end{equation}
 
-An easy way to visualize the set of valid asset allocations $(R_{1}, R_{2})$ is to plot them as a curve on a graph where the $x$ and $y$ axes represent the value of reserves $R_1$ and $R_2$ respectively. In this case, the curve is $R_2(R_1) = k / R_1$, the familiar inverse linear function $y = a / x$. Because any trade must result in another point on this curve, it is useful to charactize which trades of a given asset allocation $(R_{1}, R_{2})$ result in a new asset allocation $(R_{1}^{\prime}, R_{2}^{\prime})$ that satisfies the invariant:
+An easy way to visualize the set of valid asset allocations $(R_{1}, R_{2})$ is to plot them as a curve on a graph where the $x$ and $y$ axes represent the value of reserves $R_1$ and $R_2$ respectively. In this case, the curve is $R_2(R_1) = k / R_1$, the familiar inverse linear function $y = a / x$. Because any trade must result in another point on this curve, it is useful to charactize which trades of a given asset allocation $(R_{1}, R_{2})$ result in a new asset allocation $(R_{1}^{\prime}, R_{2}^{\prime})$ that satisfies the invariant $\varphi_{\times}(R_{1}^{\prime}, R_{2}^{\prime}) = \varphi_{\times}(R_{1}, R_{2}) = k$. Trades which satisfy this equation are considered valid because they preserve the constant product $k$. We can characterize a trade as a pair of fills $(\Delta_1, \Delta_2)$. W.l.o.g., we can assume that the market order being executed is trading asset $\Delta_1$ for asset $\Delta_2$. Execution of the trade $(\Delta_1, \Delta_2)$ results in a new asset allocation $(R_1, R_2) \rightarrow (R_1 + \Delta_1, R_2 - \Delta_2)$. For this asset allocation to be a valid, it must satisfy $\varphi_{\times}(R_1 + \Delta_1, R_2 - \Delta_2) = k$. Through manipulation, we can see that $\Delta_1$ can be expressed as a function of $(\Delta_2, R_1, R_2)$:
 
 \begin{equation}
-\label{eq:cppm_invariant}
-\varphi_{\times}(R_{1}^{\prime}, R_{2}^{\prime}) = \varphi_{\times}(R_{1}, R_{2}) = k
+\Delta_1 = \frac{R_1 \Delta_2}{R_2 - \Delta_2}
 \end{equation}
 
- Trades which satisfy this equation are considered valid because they preserve the constant product $k$. We can characterize a trade as a pair of fills $(\Delta_1, \Delta_2)$. W.l.o.g., we can assume that the market order being executed is trading asset $\Delta_1$ for asset $\Delta_2$. Execution of the trade $(\Delta_1, \Delta_2)$ results in a new asset allocation $(R_1, R_2) \rightarrow (R_1 + \Delta_1, R_2 - \Delta_2)$. For this asset allocation to be a valid, it must satisfy $\varphi_{\times}(R_1 + \Delta_1, R_2 - \Delta_2) = k$. Through manipulation, we can see that $\Delta_1$ can be expressed as a function of $(\Delta_2, R_1, R_2)$:
+$\Delta_1$ is the amount of asset that must be \emph{tendered} to purchase $\Delta_2$ units of another asset. We can see that as $\Delta_2$ approaches $R_2$, the total amount of $\Delta_1$ that must be tendered tends towards infinity. As a result, it is impossible for either $R_1$ or $R_2$ to sell out, provided that $R_1, R_2 > 0$ at the outset. We can also consider the marginal price for a market order to purchase asset $\Delta_2$, and for the liquidity pool to \emph{sell}, $\Delta_2$, $P_{\mathrm{sell}}(\Delta_2) = \Delta_1 / \Delta_2$, which we can see from the above equation is:
 
 \begin{equation}
-\label{eq:cppm_sol}
-\Delta_2 = \frac{R_1 \Delta_2}{R_2 - \Delta_2}
+P_{\mathrm{sell}}(\Delta_2) = \frac{R_1}{R_2 - \Delta_2}
 \end{equation}
 
-$\Delta_1$ is the amount of asset that must be \emph{tendered} to purchase $\Delta_2$ units of another asset. We can see that as $\Delta_2$ approaches $R_2$, the total amount of $\Delta_1$ that must be tendered tends towards infinity. As a result, it is impossible for either $R_1$ or $R_2$ to sell out, provided that $R_1, R_2 > 0$ at the outset. We can also consider the marginal price to purchase $\Delta_2$, $P_{\mathrm{buy}}(\Delta_2) = \Delta_1 / \Delta_2$, which we can see from the above equation is:
+In this way, as a buyer attempts to purchase more $\Delta_2$ from the liquidity pool, both the price and in turn the amount of $\Delta_1$ that must be tendered become unbounded. We can also see that the marginal cost is $R_1 / R_2$. It will be helpful later to derive $P_{\mathrm{buy}}(\Delta_1)$, addressing the case in which the liquidity pool is \emph{buying}. By solving $\varphi_{\times}(R_1 - \Delta_1, R_2 + \Delta_2) = k$, we see that:
 
 \begin{equation}
-\label{eq:cppm_price_sol}
-P_{\mathrm{buy}}(\Delta_2) = \frac{R_1}{R_2 - \Delta_2}
+P_{\mathrm{buy}}(\Delta_1) = \frac{R_1 - \Delta_1}{R_2}
 \end{equation}
 
-In this way, as a buyer attempts to purchase more $\Delta_2$ from the liquidity pool, both the price and in turn the amount of $\Delta_1$ that must be tendered become unbounded. We can also see that the marginal cost of 
-
-\subsection{Old Work}
-\label{sec:old}
-
-We can define the executed price, $p_{\Delta_2}(\Delta_1)$, on this trade as $\Delta_1 / \Delta_2$, which represents the units of $\Delta_1$ required to buy one unit of $\Delta_2$. The price $p_{\Delta_1}(\Delta_2)$ can be solved using the above result, leading to:
+\subsection{Constant Sum Pricing Model}
+A more elementary constant function is the sum, which we denote $\varphi_{+}(R_1, R_2)$. This model uses the addition function $x + y = k$, and valid reserve alloctions satisfy:
 
 \begin{equation}
-\label{eq:cppm_price}
-p_{\Delta_2}(\Delta_1) = \Delta_1 / \Delta_2 = \frac{R_1 \Delta_1 + \Delta_1^{2}}{R_2 \Delta_1}
+\varphi_{+}(R_1, R_2) = R_1 + R_2
 \end{equation}
 
-This reveals two important properties of Constant Product Pricing Models. First, the price to buy $\Delta_2$ scales quadratially in the amount of $\Delta_1$ that is traded, a process called slippage. CPPM's quadratic slippage creates a strong disincentive for traders to buy out $R_2$, and in fact $R_2$ will not ever sell out, as we will see shortly. Secondly, by evaluating the limit of $p_{\Delta_2}(\Delta_1)$ as $(\Delta_1, \Delta_2) \rightarrow (0, 0)$ we can see that the marginal price on the liquidity pool is $R_1 / R_2$.
+Solving the invariant $\varphi_{+}(R_1, R_2) = \varphi_{+}(R_1 + \Delta_1, R_2 + \Delta_2)$ leads to the simple solution that $\Delta_1 = \Delta_2$ under the constant pricing model. As a result, the marginal cost $\Delta_1 / \Delta_2$ is always equal to one. The constant sum model can also run out of liquidity in two ways, $(R_1, R_2) \rightarrow (R_1 + R_2, 0)$ and its opposite. This model is a "safe model" because it prices 
 
-We are particularly interested in the case in which $R_1$ represents US dollars so that $R_1 = R_D$, and $R_2$ is a cryptocurrency so that $R_2 = R_B = p_{0} B$. $B$ is the reserve cryptocurrency holdings, and $p_{0}$ is the prevailing market price for the cryptocurrency, measured in dollars. We immediately see that $k = R_D R_B = R_D (p_0 B)$. As in the previous example, we assume a market order buy arrives represented by $(\Delta_D, \Delta_B)$. This can also be written as $(\Delta_D, \delta_B)$, where $\delta_B$ represents the fill size in the cryptocurrency, and the notional value of the cryptocurrency fill, $p_0 \delta_B$ is implicit. Again, $\delta_B$ can be closed for offer size $\Delta_D$:
+\section{Automated Market Making}
+\label{sec:amm}
+
+In this section, we describe a new pricing model market making algorithm for decentralized liquidity providing on LVL: AMM v2. This algorithm succeeds AMM v1, which produced high returns for users but was prone to frequent liquidity outages. The primary objective of AMM v2 is to mitigate these liquidity outages by implementing ideas from constant function pricing models. The design objectives for AMM v2 are as follows:
+
+\begin{itemize}
+  \item Operate on a digital asset-fiat limit order book.
+  \item Provide liquidity priced to market according to a pricing oracle.
+  \item Incentivize a 50/50 allocation between base and quote assets at all times.
+  \item Guarantee price protection withing a fixed percentage of the oracle price.
+  \item Provision a liquidity pool acroos multiple, semi-autonomous liquidity providers.
+\end{itemize}
+
+The design objectives for AMM v2 present a number of challenges for adapting constant function from decentralized liquidity pools to a centralized exchange. While DeFi marketplaces exchange between two token, pricing the reserves of each token according to a reference asset such as the US dollar, our platform exchanges digital assets and dollars, pricing both in dollars. Moreover, permissionless DeFi liquidity pools operate on a "taker" model in which the liquidity pool prices assets according to the market order size. Our marketplace operates a limit order book, which requires liquidity providers to post prospective prices as limit orders rather than price to taker demand instantaneously. Finally, US regulations prevent LVL from pooling user assets together, requiring a "pool of pools" wherein each liquidity provider participating in the liquidity pool manages inventory for their own account. We explore the motivations and solutions for these problems in this section, culminating in the formulation of AMM v2.
+
+\subsection{Constant Function Pricing on Fiat Pairs}
+
+On a fiat pair, such as a BTC-USD pair, orders are sized in the base currency and quoted in the quote fiat currency, and reserves of both base and quote are priced in fiat. In this case, $R_1 = D$, the amount of dollars, priced in dollars, held in reserve. And $R_2 = \tilde{P} b$, where $\tilde{P}$ is the oracle price, $b$ is the amount of base currency in reserve, and $\tilde{P} b$ is the value of base asset priced in dollars. For the remainder of this paper, we consider reserve allocations of $(D, b)$ to differentiate fiat pairs from pairs of arbitrary tokens. Trades can be characterized as $(\Delta_D, \delta_b)$, the fill sizes of quote (dollars) and base (Bitcoin), respectively. It is important to note a distinction in how the price of such a trade is calculated compared to trades between arbitrary tokens. The price, $\Delta_D / \delta_B$ represents the cost in quote $D$ per unit $\delta_B$, but the amount of base $\delta_B$ is \emph{not priced to notional}.
+
+In the previous section, we explored the prices determined by scoring rules that, w.l.o.g., fix the constant function $\varphi(R_1, R_2) = \varphi(R_1 + \Delta_1, R_2 - \Delta_2) = k$. By the change of variables, this rule becomes:
 
 \begin{equation}
-\label{eq:cppm_sol}
-\delta_B = \frac{R_B \Delta_D}{p_0 ( R_D + \Delta_D )}
+\varphi(D, \tilde{P}b) = \varphi(D + \Delta_D, \tilde{P}(b - \delta_b)) = k
 \end{equation}
 
-Further, we can calculate the price $p_{\delta_B}(\Delta_D)$ of this trade as:
+Recall that solving these equations for the constant sum pricing model yielded the constraint $\Delta_1 = \Delta_2$, requiring the \emph{unit price of exchange} to be $\Delta_1 / \Delta_2 = 1$ for any trade. By solving the constant function equations for the fit case yields the constraint $\Delta_D = \tilde{P} \delta_b$ and resulting \emph{price of exchange} $\Delta_D / \delta_b = \tilde{P}$. It makes intuitive sense that to fix the combined notional value of dollars $D$ and Bitcoin $b$, Bitcoin and dollars must be exchanged at exactly the notional price.
+
+Under the constant product pricing model, the constant function $\varphi_{\times}(D, \tilde{P}b)$ applied to the trade $(\Delta_D, \delta_B)$ is the equation:
 
 \begin{equation}
-\label{eq:cppm_sol}
-p_{\delta_B}(\Delta_D) = \Delta_D / \delta_b = \frac{p_0 (R_D \Delta_D + \Delta_D^2)}{p_0 B \Delta_D} = \frac{R_D \Delta_D + \Delta_D^2}{B \Delta_D}
+D \tilde{P} b = (D + \Delta_D) \tilde{P} (b - \delta_b)
 \end{equation}
 
-Again, we see that the price to buy $\delta_B$ scales quadratically in the amount of $\Delta_D$ on offer by the market order. By taking the limit of $p_{\Delta_D}(\delta_B)$ as $(\Delta_D, \delta_B) \rightarrow (0, 0)$, we can the marginal price for the liquidity pool is $R_D / B$. Furthermore, the market discovery price, which is the marginal price when $R_D = R_B = p_0 B$, is seen to be $R_D / B = R_D / (R_D / P_0) = p_0$!
+Solving these equations yields the following familiar pricing functions:
 
-\section{Multi-Agent CFPM}
-\label{sec:multiagent}
+\begin{equation}
+P_{\mathrm{buy}}(\Delta_D) = \frac{D - \Delta_D}{b}, \;
+P_{\mathrm{sell}}(\delta_b) = \frac{D}{b - \delta_b}
+\end{equation}
+
+We can see that the marginal price $\Delta_D / \delta_b$ as $\Delta_D, \delta_b \rightarrow 0$ is $D / b$. Interestingly, the marginal price does not rely on $\tilde{P}$ in any way despite the fact that the constant product is between the \emph{notional values} of $D$ and $b$. However, the notional value of these reserves are exactly equal when $b = D / \tilde{P}$, and as a result $\tilde{P}$ is the marginal price when the reserves are at equilibrium. As in DeFi liquidity pools, deviation in the marginal price from $\tilde{P}$ creates an opportunity for arbitrageurs to make a profit balancing the notional reserves of $D$ and $b$.
+
+\subsection{Pricing on a Limit Order Book}
+
+DeFi liquidity pools are often referred to as decentralized exchanges, but in reality they function more like a token swap. The liquidity pool holds reserves $(R_1, R_2)$. Takers offer $\Delta_1$ in return for $\Delta_2$. As the liquidity pool reserve $R_2$ is depleted, the pool tenders smaller and smaller amounts of $\Delta_2$ for offers of $\Delta_1$. This results in a marginal exchange rate $\Delta_1 / \Delta_2$ that approach infinity as the reserve is depleted. The liquidity pool behaves exactly the same way in the converse case, charging higher marginal rates to exchange $\Delta_2$ for $\Delta_1$ as $R_1$ depletes. Furthermore, DeFi pools operate on a taker model. The amount of one asset to tender in exchange for a taker's offer of another asset is determined \emph{at the time the taker makes an offer}. While this yields a marginal price of exchange, that price does not need to be determined until the taker offer is placed.
+
+This taker-only model presents a challenge for adapting constant function pricing to limit order books. Limit order books operate on a \emph{maker-taker model} where market makers must price and post offers which are matched to taker orders in price-time priority. If we assume that any taker order matches to the entirety of an offer posted to the order book or not at all, and that only one maker offer is posted at a time, it is clear that the pricing rules $P_{\mathrm{buy}}$ and $P_{\mathrm{sell}}$ result in trades that fix the constant function $\varphi_{\times}$. We extend this to the multi-agent setting through greedy pricing. That is, a market maker which is aware of $(D, b)$ for the total pool, and which has $\Delta_D$ available to post a buy order, will price according to $P_{\mathrm{buy}}(\delta_b; D, b)$ with no consideration to the behavior of other market makers.
+
+As a regulated financial institution, we believe it is unreasonable to allow market makers to post prices which deviate excessively from the prevailing price $\tilde{P}$, regardless of the depletion of reserves. Reasonable deviations of the marginal price from the prevailing price still incentivize arbitrageurs to balance market makers' reserves. Furthermore, those deviations in marginal price drive an increase in total reserves which ultimately improves marketplace health by preventing depletions. Accordingly, we implement price protection beyond a deviation $\gamma$ as follows:
+
+\begin{equation}
+\begin{split}
+P_{\mathrm{buy}}(\Delta_D; D, b) &= \max \big\{ \frac{D - \Delta_D}{b}, \; (1 - \gamma)\tilde{P} \big\} \\
+P_{\mathrm{sell}}(\delta_b; D, b) &= \min \big\{ \frac{D}{b - \delta_b}, \; (1 + \gamma)\tilde{P} \big\}
+\end{split}
+\end{equation}
+
+Note that $\delta_b = b \rightarrow P_{\mathrm{sell}} = (1 + \gamma) \tilde{P}$, intuitively and since $b - \delta_b$ approaches $0$ from the right.
 
 \bibliographystyle{unsrt}  
 

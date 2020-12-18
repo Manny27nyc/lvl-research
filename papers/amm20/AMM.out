@@ -1,5 +1,7 @@
 \BOOKMARK [1][-]{section.1}{Background}{}% 1
 \BOOKMARK [1][-]{section.2}{Constant Function Pricing Models}{}% 2
 \BOOKMARK [2][-]{subsection.2.1}{Constant Product Pricing Model}{section.2}% 3
-\BOOKMARK [2][-]{subsection.2.2}{Old Work}{section.2}% 4
-\BOOKMARK [1][-]{section.3}{Multi-Agent CFPM}{}% 5
+\BOOKMARK [2][-]{subsection.2.2}{Constant Sum Pricing Model}{section.2}% 4
+\BOOKMARK [1][-]{section.3}{Automated Market Making}{}% 5
+\BOOKMARK [2][-]{subsection.3.1}{Constant Function Pricing on Fiat Pairs}{section.3}% 6
+\BOOKMARK [2][-]{subsection.3.2}{Pricing on a Limit Order Book}{section.3}% 7
