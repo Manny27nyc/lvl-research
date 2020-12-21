@@ -94,13 +94,14 @@ Solving the invariant $\varphi_{+}(R_1, R_2) = \varphi_{+}(R_1 + \Delta_1, R_2 +
 \section{Automated Market Making}
 \label{sec:amm}
 
-In this section, we describe a new pricing model market making algorithm for decentralized liquidity providing on LVL: AMM v2. This algorithm succeeds AMM v1, which produced high returns for users but was prone to frequent liquidity outages. The primary objective of AMM v2 is to mitigate these liquidity outages by implementing ideas from constant function pricing models. The design objectives for AMM v2 are as follows:
+In this section, we describe a new market making algorithm for decentralized liquidity providers on LVL: AMM v2. This algorithm succeeds AMM v1, which produced high returns for users but was prone to liquidity outages. The primary objective of AMM v2 is to mitigate these liquidity outages by implementing ideas from constant function pricing models. The design objectives for AMM v2 are:
 
 \begin{itemize}
   \item Operate on a digital asset-fiat limit order book.
   \item Provide liquidity priced to market according to a pricing oracle.
   \item Incentivize a 50/50 allocation between base and quote assets at all times.
-  \item Guarantee price protection withing a fixed percentage of the oracle price.
+  \item Implement a minimum spread, or marginal profit margin, for liquidity providing.
+  \item Guarantee price protection for takers withing a fixed percentage of the oracle price.
   \item Provision a liquidity pool acroos multiple, semi-autonomous liquidity providers.
 \end{itemize}
 
