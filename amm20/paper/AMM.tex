@@ -64,32 +64,32 @@ The constant product pricing model, introduced by Uniswap \cite{uniswapv2}, uses
 \varphi_{\times}(R_1, R_2) = R_1R_2 = k
 \end{equation}
 
-An easy way to visualize the set of valid asset allocations $(R_{1}, R_{2})$ is to plot them as a curve on a graph where the $x$ and $y$ axes represent the value of reserves $R_1$ and $R_2$ respectively. In this case, the curve is $R_2(R_1) = k / R_1$, the familiar inverse linear function $y = a / x$. Because any trade must result in another point on this curve, it is useful to charactize which trades of a given asset allocation $(R_{1}, R_{2})$ result in a new asset allocation $(R_{1}^{\prime}, R_{2}^{\prime})$ that satisfies the invariant $\varphi_{\times}(R_{1}^{\prime}, R_{2}^{\prime}) = \varphi_{\times}(R_{1}, R_{2}) = k$. Trades which satisfy this equation are considered valid because they preserve the constant product $k$. We can characterize a trade as a pair of fills $(\Delta_1, \Delta_2)$. W.l.o.g., we can assume that the market order being executed is trading asset $\Delta_1$ for asset $\Delta_2$. Execution of the trade $(\Delta_1, \Delta_2)$ results in a new asset allocation $(R_1, R_2) \rightarrow (R_1 + \Delta_1, R_2 - \Delta_2)$. For this asset allocation to be a valid, it must satisfy $\varphi_{\times}(R_1 + \Delta_1, R_2 - \Delta_2) = k$. Through manipulation, we can see that $\Delta_1$ can be expressed as a function of $(\Delta_2, R_1, R_2)$:
+An easy way to visualize the set of valid asset allocations $(R_{1}, R_{2})$ is to plot them as a curve on a graph where the $x$ and $y$ axes represent the value of reserves $R_1$ and $R_2$ respectively. In this case, the curve is $R_2(R_1) = k / R_1$, the familiar inverse linear function $y = a / x$. Because any trade must result in another point on this curve, it is useful to charactize which trades of a given asset allocation $(R_{1}, R_{2})$ result in a new asset allocation $(R_{1}^{\prime}, R_{2}^{\prime})$ that satisfies the constant function $\varphi_{\times}(R_{1}^{\prime}, R_{2}^{\prime}) = \varphi_{\times}(R_{1}, R_{2}) = k$. We can characterize a trade as a pair of fills $(\Delta_1, \Delta_2)$. W.l.o.g., we can assume that the market order being executed is trading asset $\Delta_1$ for asset $\Delta_2$. Execution of the trade $(\Delta_1, \Delta_2)$ results in a new asset allocation $(R_1, R_2) \rightarrow (R_1 + \Delta_1, R_2 - \Delta_2)$. For this asset allocation to be a valid, it must satisfy $\varphi_{\times}(R_1 + \Delta_1, R_2 - \Delta_2) = k$. Through manipulation, we can see that $\Delta_1$ can be expressed as a function of $(\Delta_2, R_1, R_2)$:
 
 \begin{equation}
 \Delta_1 = \frac{R_1 \Delta_2}{R_2 - \Delta_2}
 \end{equation}
 
-$\Delta_1$ is the amount of asset that must be \emph{tendered} to purchase $\Delta_2$ units of another asset. We can see that as $\Delta_2$ approaches $R_2$, the total amount of $\Delta_1$ that must be tendered tends towards infinity. As a result, it is impossible for either $R_1$ or $R_2$ to sell out, provided that $R_1, R_2 > 0$ at the outset. We can also consider the marginal price for a market order to purchase asset $\Delta_2$, and for the liquidity pool to \emph{sell}, $\Delta_2$, $P_{\mathrm{sell}}(\Delta_2) = \Delta_1 / \Delta_2$, which we can see from the above equation is:
+$\Delta_1$ is the amount of a first asset that must be \emph{tendered} to purchase $\Delta_2$ units of another asset. We can see that as $\Delta_2$ approaches $R_2$, the total amount of $\Delta_1$ that must be tendered tends towards infinity. As a result, it is impossible for either $R_1$ or $R_2$ to sell out, provided that $R_1, R_2 > 0$ at the outset. We can also consider the marginal price for a market order to purchase asset $\Delta_2$, and for the liquidity pool to \emph{sell}, $\Delta_2$, $P_{\mathrm{sell}}(\Delta_2) = \Delta_1 / \Delta_2$, which we can see from the above equation is:
 
 \begin{equation}
 P_{\mathrm{sell}}(\Delta_2) = \frac{R_1}{R_2 - \Delta_2}
 \end{equation}
 
-In this way, as a buyer attempts to purchase more $\Delta_2$ from the liquidity pool, both the price and in turn the amount of $\Delta_1$ that must be tendered become unbounded. We can also see that the marginal cost is $R_1 / R_2$. It will be helpful later to derive $P_{\mathrm{buy}}(\Delta_1)$, addressing the case in which the liquidity pool is \emph{buying}. By solving $\varphi_{\times}(R_1 - \Delta_1, R_2 + \Delta_2) = k$, we see that:
+As a buyer attempts to purchase more $\Delta_2$ from the liquidity pool, both the price and the amount of $\Delta_1$ that must be tendered become unbounded. We can also see that the marginal cost is $R_1 / R_2$. It will be helpful later to derive $P_{\mathrm{buy}}(\Delta_1)$, addressing the case in which the liquidity pool is \emph{buying}. By solving $\varphi_{\times}(R_1 - \Delta_1, R_2 + \Delta_2) = k$, we see that:
 
 \begin{equation}
 P_{\mathrm{buy}}(\Delta_1) = \frac{R_1 - \Delta_1}{R_2}
 \end{equation}
 
 \subsection{Constant Sum Pricing Model}
-A more elementary constant function is the sum, which we denote $\varphi_{+}(R_1, R_2)$. This model uses the addition function $x + y = k$, and valid reserve alloctions satisfy:
+A more elementary constant function is the addition function, which we denote $\varphi_{+}(R_1, R_2)$. This model uses the sum $x + y = k$, and valid reserve alloctions satisfy:
 
 \begin{equation}
 \varphi_{+}(R_1, R_2) = R_1 + R_2
 \end{equation}
 
-Solving the invariant $\varphi_{+}(R_1, R_2) = \varphi_{+}(R_1 + \Delta_1, R_2 + \Delta_2)$ leads to the simple solution that $\Delta_1 = \Delta_2$ under the constant pricing model. As a result, the marginal cost $\Delta_1 / \Delta_2$ is always equal to one. The constant sum model can also run out of liquidity in two ways, $(R_1, R_2) \rightarrow (R_1 + R_2, 0)$ and its opposite. This model is a "safe model" because it prices 
+Solving the invariant $\varphi_{+}(R_1, R_2) = \varphi_{+}(R_1 + \Delta_1, R_2 + \Delta_2)$ leads to the simple solution that $\Delta_1 = \Delta_2$ under the constant pricing model. As a result, the marginal cost $\Delta_1 / \Delta_2$ is always equal to one. The constant sum model can also run out of liquidity in two ways, $(R_1, R_2) \rightarrow (R_1 + R_2, 0)$ and its opposite.
 
 \section{Automated Market Making}
 \label{sec:amm}
