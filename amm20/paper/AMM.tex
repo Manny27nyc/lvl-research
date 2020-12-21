@@ -144,8 +144,8 @@ As a regulated financial institution, we believe it is unreasonable to allow mar
 
 \begin{equation}
 \begin{split}
-P_{\mathrm{buy}}(\Delta_D; D, b) &= \min \Big( \max \big( (1 - \gamma)\tilde{P}, \; \frac{D - \Delta_D}{b} - \alpha \tilde{P} \big), \; (1 + \gamma) \tilde{P} - \epsilon \Big) \\
-P_{\mathrm{sell}}(\delta_b; D, b) &= \min \Big( \max \big( (1 - \gamma) \tilde{P} + \epsilon, \; \frac{D}{b - \delta_b} + \alpha \tilde{P} \big), \; (1 + \gamma)\tilde{P} \Big)
+P_{\mathrm{buy}}(\Delta_D; D, b) &= \min \Big( \max \big( (1 - \gamma - \alpha)\tilde{P}, \; (1 - \alpha) \frac{D - \Delta_D}{b} \big), \; (1 + \gamma - \alpha) \tilde{P} \Big) \\
+P_{\mathrm{sell}}(\delta_b; D, b) &= \min \Big( \max \big( (1 - \gamma + \alpha) \tilde{P}, \; (1 + \alpha) \frac{D}{b - \delta_b} \big), \; (1 + \gamma + \alpha)\tilde{P} \Big)
 \end{split}
 \end{equation}
 
