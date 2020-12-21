@@ -144,12 +144,12 @@ As a regulated financial institution, we believe it is unreasonable to allow mar
 
 \begin{equation}
 \begin{split}
-P_{\mathrm{buy}}(\Delta_D; D, b) &= \max \big\{ \frac{D - \Delta_D}{b} - \alpha \tilde{P}, \; (1 - \gamma)\tilde{P} \big\} \\
-P_{\mathrm{sell}}(\delta_b; D, b) &= \min \big\{ \frac{D}{b - \delta_b} + \alpha \tilde{P}, \; (1 + \gamma)\tilde{P} \big\}
+P_{\mathrm{buy}}(\Delta_D; D, b) &= \min \Big( \max \big( (1 - \gamma)\tilde{P}, \; \frac{D - \Delta_D}{b} - \alpha \tilde{P} \big), \; (1 + \gamma) \tilde{P} - \epsilon \Big) \\
+P_{\mathrm{sell}}(\delta_b; D, b) &= \min \Big( \max \big( (1 - \gamma) \tilde{P} + \epsilon, \; \frac{D}{b - \delta_b} + \alpha \tilde{P} \big), \; (1 + \gamma)\tilde{P} \Big)
 \end{split}
 \end{equation}
 
-Note that $\delta_b = b \Rightarrow P_{\mathrm{sell}} = (1 + \gamma) \tilde{P}$, intuitively and since $b - \delta_b$ approaches $0$ from the right.
+Hre, $\epsilon$ is a small factor to prevent limit orders from crossing. We use the quote increment of the pair for $\epsilon$ in our implementation.
 
 \bibliographystyle{unsrt}  
 
